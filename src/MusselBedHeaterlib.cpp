@@ -19,15 +19,8 @@ void ADG725::begin(uint8_t CS_MUX, uint32_t SPI_SPEED){
 }
 
 void ADG725::begin(){
-#ifndef CS_MUX
-#define CS_MUX 7 // Appropriate for MusselBedHeater RevC hardware
-#endif
-    
-#ifndef SPI_SPEED
-#define SPI_SPEED 4000000 // 4 MHz
-#endif
-    m_CS_MUX = CS_MUX;
-    m_SPI_SPEED = SPI_SPEED;
+    m_CS_MUX = 7;
+    m_SPI_SPEED = 4000000L;
     pinMode(m_CS_MUX, OUTPUT);
 }
 

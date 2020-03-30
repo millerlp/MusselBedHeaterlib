@@ -1,0 +1,14 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setADG725channel	KEYWORD2
+initFileName	KEYWORD2
+startTIMER2	KEYWORD2
+goToSleep	KEYWORD2
+printTimeToSD	KEYWORD2
+OLEDscreenUpdate	KEYWORD2

@@ -10,6 +10,9 @@
 #define MusselBedHeaterlib_H
 
 #include <Arduino.h> // to get access to pinMode, digitalRead etc functions
+#include "SdFat.h"	// https://github.com/greiman/SdFat
+#include <SPI.h>
+#include "RTClib.h" // https://github.com/millerlp/RTClib
 // Various additional libraries for access to sleep mode functions
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -18,7 +21,22 @@
 #include <avr/wdt.h>
 #include <math.h>
 
+
+class ADG725 {
+public:
+    ADG725();
+    ~ADG725();
+    void begin(uint8_t CS_MUX, uint32_t SPI_SPEED);
+    void begin();
+    void setADG725channel(uint8_t ADGchannel);
+    
+private:
+    uint8_t m_CS_MUX;
+    uint32_t m_SPI_SPEED;
+};
+
 //--------- Public functions
+
 
 // Print formatted Date + Time to Serial monitor
 void printTimeSerial(DateTime now);

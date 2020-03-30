@@ -9,6 +9,43 @@
 #include "MusselBedHeaterlib.h"
 
 
+ADG725::ADG725(){}
+ADG725::~ADG725(){}
+
+void ADG725::begin(uint8_t CS_MUX, uint32_t SPI_SPEED){
+    m_CS_MUX = CS_MUX;
+    m_SPI_SPEED = SPI_SPEED;
+    pinMode(m_CS_MUX, OUTPUT);
+}
+
+void ADG725::begin(){
+#ifndef CS_MUX
+#define CS_MUX 7 // Appropriate for MusselBedHeater RevC hardware
+#endif
+    
+#ifndef SPI_SPEED
+#define SPI_SPEED 4000000 // 4 MHz
+#endif
+    m_CS_MUX = CS_MUX;
+    m_SPI_SPEED = SPI_SPEED;
+    pinMode(m_CS_MUX, OUTPUT);
+}
+
+//************ Function to set input/output channel pair on ADG725 multiplexer
+void ADG725::setADG725channel(uint8_t ADGchannel) {
+    // Reset the SPI bus settings and mode
+    SPI.beginTransaction(SPISettings(m_SPI_SPEED, MSBFIRST, SPI_MODE1));
+    // Activate the ADG725 SYNC line (CS_MUX)
+    digitalWrite(m_CS_MUX, LOW); // activate ADG725 SYNC line by pulling low
+    // Transfer the new channel address for the ADG725 as an 8-bit value
+    SPI.transfer(ADGchannel); // Send 8-bit byte to set addresses and EN line
+    // Deactivate the ADG725 SYNC line
+    digitalWrite(m_CS_MUX, HIGH); // pull high to stop sending data to ADG725
+    // End the transaction, release the SPI bus
+    SPI.endTransaction();
+}
+//*************************************************************************
+
 void printTimeSerial(DateTime now){
     //------------------------------------------------
     // printTime function takes a DateTime object from

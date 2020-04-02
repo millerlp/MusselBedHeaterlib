@@ -39,11 +39,25 @@ private:
 };
 
 //--------- Public functions
+    /**
+      Constructor
 
+      @param max31820 - a OneWire object 
+      @param refSensors - a DallasTemperature object representing the MAX31820 sensors - linked to the max31820 OneWire object
+      @param numRefSensors - number of MAX31820 sensors found, defined as a global variable in the calling program
+      @param sensorAddr - an array, [numRefSensors] rows by 8 bytes wide, defined as a global variable in the calling program
+    */
 // Get addresses for all available OneWire devices
-void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t* numRefSensors, uint8_t sensorAddr[][8]);
+void getRefSensorAddresses(OneWire& max31820, 
+							DallasTemperature& refSensors, 
+							uint8_t numRefSensors, 
+							uint8_t sensorAddr[][8]);
 // Version with user-specified temperature precision
-//void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t numRefSensors, uint8_t sensorAddr, uint8_t TEMPERATURE_PRECISION);
+void getRefSensorAddresses(OneWire& max31820, 
+						DallasTemperature& refSensors, 
+						uint8_t numRefSensors, 
+						uint8_t sensorAddr[][8], 
+						uint8_t TEMPERATURE_PRECISION);
 
 // Print formatted Date + Time to Serial monitor
 void printTimeSerial(DateTime now);

@@ -75,6 +75,75 @@ void printTimeSerial(DateTime now){
     
 }
 
+//*********************************************************
+// OneWire temperature sensor functions
+// sensorAddr is expected to be at least a 4row x 8byte array
+void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t* numRefSensors, uint8_t sensorAddr[][8]){
+    
+    refSensors.begin();
+    numRefSensors = refSensors.getDeviceCount();
+    max31820.reset_search();
+    uint8_t addr[8]; // OneWire address array, 8 bytes long
+    
+    for (uint8_t i = 0; i < numRefSensors; i++){
+        max31820.search(addr); // read next sensor address into addr
+        // Copy address values to sensorAddr array
+        for (uint8_t j = 0; j < 8; j++){
+            sensorAddr[i][j] = addr[j];
+        }
+        // Set sensor resolution to 11 bits, approx 400ms conversion time
+        refSensors.setResolution(addr, 11);
+        
+    }
+    max31820.reset_search();
+    
+    // Tell the DallasTemperature library to not wait for the
+    // temperature reading to complete after telling devices
+    // to take a new temperature reading (so we can do other things
+    // while the temperature reading is being taken by the devices).
+    // You will have to arrange your code so that an appropriate
+    // amount of time passes before you try to use getTempC() after
+    // requestTemperatures() is used
+    refSensors.setWaitForConversion(false);
+}
+
+
+//*********************************************************
+// OneWire temperature sensor functions
+// sensorAddr is expected to be at least a 4row x 8byte array
+/*
+void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t numRefSensors, uint8_t sensorAddr,
+                     uint8_t TEMPERATURE_PRECISION){
+    
+    refSensors.begin();
+    numRefSensors = refSensors.getDeviceCount();
+    max31820.reset_search();
+    uint8_t addr[8]; // OneWire address array, 8 bytes long
+    
+    for (uint8_t i = 0; i < numRefSensors; i++){
+        max31820.search(addr); // read next sensor address into addr
+        // Copy address values to sensorAddr array
+        for (uint8_t j = 0; j < 8; j++){
+            sensorAddr[i][j] = addr[j];
+        }
+        
+        refSensors.setResolution(addr, TEMPERATURE_PRECISION);
+        
+    }
+    max31820.reset_search();
+    
+    // Tell the DallasTemperature library to not wait for the
+    // temperature reading to complete after telling devices
+    // to take a new temperature reading (so we can do other things
+    // while the temperature reading is being taken by the devices).
+    // You will have to arrange your code so that an appropriate
+    // amount of time passes before you try to use getTempC() after
+    // requestTemperatures() is used
+    refSensors.setWaitForConversion(false);
+}
+
+*/
+
 
 //---------------printTimeToSD----------------------------------------
 // printTimeToSD function. This formats the available data in the

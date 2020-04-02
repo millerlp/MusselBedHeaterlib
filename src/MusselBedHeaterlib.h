@@ -13,6 +13,9 @@
 #include "SdFat.h"	// https://github.com/greiman/SdFat
 #include <SPI.h>
 #include "RTClib.h" // https://github.com/millerlp/RTClib
+#include <OneWire.h>  // For MAX31820 temperature sensor https://github.com/PaulStoffregen/OneWire
+#include <DallasTemperature.h> // For MAX31820 sensors https://github.com/milesburton/Arduino-Temperature-Control-Library
+
 // Various additional libraries for access to sleep mode functions
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -37,6 +40,10 @@ private:
 
 //--------- Public functions
 
+// Get addresses for all available OneWire devices
+void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t* numRefSensors, uint8_t sensorAddr[][8]);
+// Version with user-specified temperature precision
+//void refSensorsBegin(OneWire& max31820, DallasTemperature& refSensors, uint8_t numRefSensors, uint8_t sensorAddr, uint8_t TEMPERATURE_PRECISION);
 
 // Print formatted Date + Time to Serial monitor
 void printTimeSerial(DateTime now);

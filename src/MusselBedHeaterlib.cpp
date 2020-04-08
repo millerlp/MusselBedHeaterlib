@@ -38,6 +38,19 @@ void ADG725::setADG725channel(uint8_t ADGchannel) {
     SPI.endTransaction();
 }
 //*************************************************************************
+void ADG725::disableADG725(void){
+	// Reset the SPI bus settings and mode
+    SPI.beginTransaction(SPISettings(m_SPI_SPEED, MSBFIRST, SPI_MODE1));
+    // Activate the ADG725 SYNC line (CS_MUX)
+    digitalWrite(m_CS_MUX, LOW); // activate ADG725 SYNC line by pulling low
+    // Transfer hex value for the ADG725 to disable all channels
+    SPI.transfer(0x80); // Send 0x80 byte to pull EN line high, disables all
+    // Deactivate the ADG725 SYNC line
+    digitalWrite(m_CS_MUX, HIGH); // pull high to stop sending data to ADG725
+    // End the transaction, release the SPI bus
+    SPI.endTransaction();
+}
+//*************************************************************************
 
 void printTimeSerial(DateTime now){
     //------------------------------------------------

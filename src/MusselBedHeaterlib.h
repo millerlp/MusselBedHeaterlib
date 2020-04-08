@@ -32,6 +32,7 @@ public:
     void begin(uint8_t CS_MUX, uint32_t SPI_SPEED);
     void begin();
     void setADG725channel(uint8_t ADGchannel);
+	void disableADG725(void);
     
 private:
     uint8_t m_CS_MUX;

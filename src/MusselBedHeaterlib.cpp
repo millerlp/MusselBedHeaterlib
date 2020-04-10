@@ -19,12 +19,15 @@ void ADG725::begin(uint8_t CS_MUX, uint32_t SPI_SPEED){
 }
 
 void ADG725::begin(){
-    m_CS_MUX = 7; // Default for MusselBedHeater Rev C hardware
-    m_SPI_SPEED = 4000000L;
+    m_CS_MUX = 7; // Default chip select pin for MusselBedHeater Rev C hardware
+    m_SPI_SPEED = 4000000L; // 4MHz seems to work on 8MHz internal oscillator
     pinMode(m_CS_MUX, OUTPUT);
 }
 
 //************ Function to set input/output channel pair on ADG725 multiplexer
+/*	@param ADGchannel A byte value from 0 to 15 denoting which channel should
+	be enabled on the ADG725. Enables both the A and B sides of the multiplexer
+*/
 void ADG725::setADG725channel(uint8_t ADGchannel) {
     // Reset the SPI bus settings and mode
     SPI.beginTransaction(SPISettings(m_SPI_SPEED, MSBFIRST, SPI_MODE1));
@@ -38,6 +41,7 @@ void ADG725::setADG725channel(uint8_t ADGchannel) {
     SPI.endTransaction();
 }
 //*************************************************************************
+// Disable all channels on the ADG725, effectively shutting it off
 void ADG725::disableADG725(void){
 	// Reset the SPI bus settings and mode
     SPI.beginTransaction(SPISettings(m_SPI_SPEED, MSBFIRST, SPI_MODE1));

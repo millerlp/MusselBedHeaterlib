@@ -15,6 +15,7 @@
 #include "RTClib.h" // https://github.com/millerlp/RTClib
 #include <OneWire.h>  // For MAX31820 temperature sensor https://github.com/PaulStoffregen/OneWire
 #include <DallasTemperature.h> // For MAX31820 sensors https://github.com/milesburton/Arduino-Temperature-Control-Library
+//#include "PID_v1.h" //  https://github.com/br3ttb/Arduino-PID-Library/
 
 // Various additional libraries for access to sleep mode functions
 #include <avr/interrupt.h>
@@ -24,7 +25,9 @@
 #include <avr/wdt.h>
 #include <math.h>
 
-
+/*
+* Class for Analog Devices ADG725 16-channel x 2 multiplexer
+*/
 class ADG725 {
 public:
     ADG725();
@@ -38,6 +41,40 @@ private:
     uint8_t m_CS_MUX;
     uint32_t m_SPI_SPEED;
 };
+
+//************** PID function *********************************************
+// This is a stripped down version of the PID_v1 library from
+// https://github.com/br3ttb/Arduino-PID-Library/ by Brett Beauregard
+// Designed to save some memory space because we're using the same sort of
+// heating elements on all mussels, so the tuning parameters can be shared
+// It also eliminates some of the flexibility of the original library in 
+// order to save memory.
+
+class PID {
+public:
+	PID();
+	~PID();
+	void begin(double* kp, 
+		double* ki, 
+		double* kd, 
+		int pidSampleTime );
+	
+	bool Compute(double pidInput[], 
+					double pidOutput[], 
+					double pidOutputsum[], 
+					double pidLastInput[], 
+					double pidSetpoint, 
+					int pidSampleTime, 
+					unsigned long lastTime,
+					double kp,
+					double ki,
+					double kd,
+					byte NUM_THERMISTORS);
+
+};
+
+//****************************************************************
+
 
 //--------- Public functions
     /**

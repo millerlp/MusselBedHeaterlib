@@ -56,6 +56,93 @@ void ADG725::disableADG725(void){
 }
 //*************************************************************************
 
+
+
+//************** PID function *********************************************
+// This is a stripped down version of the PID_v1 library from
+// https://github.com/br3ttb/Arduino-PID-Library/ by Brett Beauregard
+// Designed to save some memory space because we're using the same sort of
+// heating elements on all mussels, so the tuning parameters can be shared
+// It also eliminates some of the flexibility of the original library in 
+// order to save memory.
+
+PID::PID(){}
+// De-constructor function, for completeness. 
+PID::~PID(){}
+
+void PID::begin(double* kp, 
+				double* ki, 
+				double* kd, 
+				int pidSampleTime)
+{
+   double SampleTimeInSec = ((double)pidSampleTime)/1000;
+   // Scale the ki and kd value from milliseconds to seconds, leave kp unchanged
+   // This is working via the pointers to the ki, kd values, and re-writing the 
+   // values in the global variable versions of ki, kd (kp is left unchanged)
+   *ki =  *ki * SampleTimeInSec;
+   *kd = *kd / SampleTimeInSec;
+}
+
+/* Compute() **********************************************************************
+ *   This function should be called every time "void loop()" executes.  
+ *   The function will decide for itself whether a new
+ *   pid Output needs to be computed.  Returns true when the output is computed,
+ *   false when nothing has been done.
+ *
+ *	Necessary global variables:
+ *	@param pidInput - float value (temperature)
+ *  @param pidSetpoint - float value (target temperature)
+ *  @param pidOutput - float value (PWM setting, 0-4095)
+ *  @param kp - proportional tuning parameter
+ *  @param ki - integrative tuning parameter
+ *  @param kd - derivative tuning parameter
+ *  @param pidSampleTime - milliseconds
+ *  @param lastTime - milliseconds value from previous round of calcs
+ *
+ **********************************************************************************/
+bool PID::Compute(double pidInput[], 
+					double pidOutput[], 
+					double pidOutputSum[], 
+					double pidLastInput[], 
+					double pidSetpoint, 
+					int pidSampleTime,
+					unsigned long lastTime,
+					double kp,
+					double ki,
+					double kd,
+					byte NUM_THERMISTORS)
+{
+   unsigned long now = millis();
+   unsigned long timeChange = (now - lastTime);
+   if(timeChange >= pidSampleTime)
+   {
+	   for (byte i = 0; i < NUM_THERMISTORS; i++){
+		   /*Compute all the working error variables*/
+		   double input = pidInput[i];
+		   double error = pidSetpoint - input;
+		   double dInput = (input - pidLastInput[i]);
+		   pidLastInput[i] = input;
+		   pidOutputSum[i] += (ki * error);
+		   /*Add Proportional on Measurement*/
+		   pidOutputSum[i] -= kp * dInput;
+		   if(pidOutputSum[i] > 4095) pidOutputSum[i] = 4095; // Hardcoded max for 16-bit PWM
+		   else if(pidOutputSum[i] < 0) pidOutputSum[i] = 0; // Hardcoded minimum
+		   /*Add Proportional on Error*/
+		   pidOutput[i] = kp * error;
+		   /*Compute Rest of PID Output*/
+		   pidOutput[i] += pidOutputSum[i] - (kd * dInput);
+		   if(pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
+		   else if(pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum
+	   }
+
+      lastTime = now; // update lastTime since we did calculations
+	  return true;
+   }
+   else return false; // not enough time elapsed, no calculation done this time
+}
+
+
+
 void printTimeSerial(DateTime now){
     //------------------------------------------------
     // printTime function takes a DateTime object from

@@ -1,14 +1,23 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-
+ADG725 		KEYWORD1
+RGBLED		KEYWORD1
+PID			KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-setADG725channel	KEYWORD2
-initFileName	KEYWORD2
-startTIMER2	KEYWORD2
-goToSleep	KEYWORD2
-printTimeToSD	KEYWORD2
-OLEDscreenUpdate	KEYWORD2
+setADG725channel		KEYWORD2
+disableADG725			KEYWORD2
+initFileName			KEYWORD2
+startTIMER2				KEYWORD2
+goToSleep				KEYWORD2
+printTimeToSD			KEYWORD2
+OLEDscreenUpdate		KEYWORD2
+readBatteryVoltage		KEYWORD2
+setColor				KEYWORD2
+begin					KEYWORD2
+getRefSensorAddresses	KEYWORD2
+Compute					KEYWORD2
+resetPID				KEYWORD2

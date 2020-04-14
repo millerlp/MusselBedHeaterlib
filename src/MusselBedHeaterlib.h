@@ -15,7 +15,6 @@
 #include "RTClib.h" // https://github.com/millerlp/RTClib
 #include <OneWire.h>  // For MAX31820 temperature sensor https://github.com/PaulStoffregen/OneWire
 #include <DallasTemperature.h> // For MAX31820 sensors https://github.com/milesburton/Arduino-Temperature-Control-Library
-//#include "PID_v1.h" //  https://github.com/br3ttb/Arduino-PID-Library/
 
 // Various additional libraries for access to sleep mode functions
 #include <avr/interrupt.h>
@@ -24,6 +23,12 @@
 #include <wiring_private.h>
 #include <avr/wdt.h>
 #include <math.h>
+
+// RGB LED settings for MusselBedHeater
+#define COMMON_ANODE true // LED used on MusselBedHeater RevC is common anode style
+#define REDLED 9 // red led cathode on digital pin 9
+#define GRNLED 5 // green led cathode on digital pin 5
+#define BLULED 6 // blue led cathode on digital pin 6
 
 /*
 * Class for Analog Devices ADG725 16-channel x 2 multiplexer
@@ -69,7 +74,12 @@ public:
 					double kp,
 					double ki,
 					double kd,
-					byte NUM_THERMISTORS);
+					uint8_t NUM_THERMISTORS);
+					
+	void resetPID(double pidOutput[], 
+					double pidOutputSum[],
+					unsigned long lastTime,
+					uint8_t NUM_THERMISTORS);
 
 };
 
@@ -117,6 +127,29 @@ DateTime startTIMER2(DateTime currTime, RTC_DS3231& rtc, byte SPS);
 void goToSleep();
 
 // Function to read supply battery voltage
-float readBatteryVoltage(byte BATT_MONITOR_EN, byte BATT_MONITOR, float dividerRatio, float refVoltage);
+float readBatteryVoltage(byte BATT_MONITOR_EN, 
+							byte BATT_MONITOR, 
+							float dividerRatio, 
+							float refVoltage);
+
+
+class RGBLED{
+	public:
+		RGBLED();
+		~RGBLED();
+
+		// Functions to output color on RGB led
+		void begin(); // Use default pins defined above
+		// Allow user to specify default pins
+		void begin(uint8_t redpin, uint8_t greenpin, uint8_t bluepin);
+		void setColor(uint8_t red, uint8_t green, uint8_t blue);
+
+
+	private:
+		uint8_t m_redled;
+		uint8_t m_greenled; 
+		uint8_t m_blueled;
+};
+
 
 #endif /* MusselBedHeaterlib_H */

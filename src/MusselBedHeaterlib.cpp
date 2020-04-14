@@ -110,7 +110,7 @@ bool PID::Compute(double pidInput[],
 					double kp,
 					double ki,
 					double kd,
-					byte NUM_THERMISTORS)
+					uint8_t NUM_THERMISTORS)
 {
    unsigned long now = millis();
    unsigned long timeChange = (now - lastTime);
@@ -118,21 +118,31 @@ bool PID::Compute(double pidInput[],
    {
 	   for (byte i = 0; i < NUM_THERMISTORS; i++){
 		   /*Compute all the working error variables*/
-		   double input = pidInput[i];
-		   double error = pidSetpoint - input;
+		   double input = pidInput[i]; // Input temperature
+		   double error = pidSetpoint - input; 
 		   double dInput = (input - pidLastInput[i]);
-		   pidLastInput[i] = input;
-		   pidOutputSum[i] += (ki * error);
-		   /*Add Proportional on Measurement*/
-		   pidOutputSum[i] -= kp * dInput;
-		   if(pidOutputSum[i] > 4095) pidOutputSum[i] = 4095; // Hardcoded max for 16-bit PWM
-		   else if(pidOutputSum[i] < 0) pidOutputSum[i] = 0; // Hardcoded minimum
-		   /*Add Proportional on Error*/
-		   pidOutput[i] = kp * error;
-		   /*Compute Rest of PID Output*/
-		   pidOutput[i] += pidOutputSum[i] - (kd * dInput);
-		   if(pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
-		   else if(pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum
+		   // If input temperature is reasonable (higher than -20)
+		   if (input > -20 & input < 60){
+			   pidLastInput[i] = input;
+			   pidOutputSum[i] += (ki * error);
+			   /*Add Proportional on Measurement*/
+			   pidOutputSum[i] -= kp * dInput;
+			   if(pidOutputSum[i] > 4095) pidOutputSum[i] = 4095; // Hardcoded max for 16-bit PWM
+			   else if(pidOutputSum[i] < 0) pidOutputSum[i] = 0; // Hardcoded minimum
+			   /*Add Proportional on Error*/
+			   pidOutput[i] = kp * error;
+			   /*Compute Rest of PID Output*/
+			   pidOutput[i] += pidOutputSum[i] - (kd * dInput);
+			   if(pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
+			   else if(pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum			   
+		   } else {
+			   // If input temperature is out of bounds, zero everything out
+			   pidLastInput[i] = input;
+			   pidOutputSum[i] = 0; // zero this out
+			   pidOutput[i] = 0; // zero this out, turns off heater
+		   }
+		   
+
 	   }
 
       lastTime = now; // update lastTime since we did calculations
@@ -141,7 +151,85 @@ bool PID::Compute(double pidInput[],
    else return false; // not enough time elapsed, no calculation done this time
 }
 
+/**********************************************
+* resetPID - when heaters are off, reset PID output, output sum, and last time
+* values, so that when the PID routine restarts later on it has a fresh start.
+*/
+void PID::resetPID(double pidOutput[], 
+					double pidOutputSum[],
+					unsigned long lastTime,
+					uint8_t NUM_THERMISTORS)
+{
+	for (byte i = 0; i < NUM_THERMISTORS; i++){
+		pidOutput[i] = 0;
+		pidOutputSum[i] = 0;
+	}
+	lastTime = millis();
+						
+	
+}
 
+//-------------------------------------------------------------------
+// Initialize a RGB LED
+// Default intialization using pins defined in MusselBedHeaterlib.h
+
+RGBLED::RGBLED(){};
+RGBLED::~RGBLED(){};
+
+void RGBLED::begin(){
+	m_redled = 9;
+	m_greenled = 5;
+	m_blueled = 6;
+	pinMode(m_redled, OUTPUT);
+	pinMode(m_greenled, OUTPUT);
+	pinMode(m_blueled, OUTPUT);
+	if (COMMON_ANODE){
+		digitalWrite(m_redled, HIGH); // for common anode LED, set high to shut off
+		digitalWrite(m_greenled, HIGH);
+		digitalWrite(m_blueled, HIGH);	
+	} else {
+		digitalWrite(m_redled, LOW); // for common cathode LED, set low to shut off
+		digitalWrite(m_greenled, LOW);
+		digitalWrite(m_blueled, LOW);			
+	}
+	
+}
+
+// User-specified pins for red, green, blue channels of LED
+void RGBLED::begin(uint8_t redpin, uint8_t greenpin, uint8_t bluepin){
+	m_redled = redpin;
+	m_greenled = greenpin;
+	m_blueled = bluepin;
+	pinMode(m_redled, OUTPUT);
+	pinMode(m_greenled, OUTPUT);
+	pinMode(m_blueled, OUTPUT);
+	if (COMMON_ANODE){
+		digitalWrite(m_redled, HIGH); // for common anode LED, set high to shut off
+		digitalWrite(m_greenled, HIGH);
+		digitalWrite(m_blueled, HIGH);	
+	} else {
+		digitalWrite(m_redled, LOW); // for common cathode LED, set low to shut off
+		digitalWrite(m_greenled, LOW);
+		digitalWrite(m_blueled, LOW);			
+	}
+}
+//-----------------setColor---------------------
+// Enter a set of values 0-255 for the red, green, and blue LED channels
+void RGBLED::setColor(uint8_t red, uint8_t green, uint8_t blue)
+{
+  #ifdef COMMON_ANODE
+    red = 255 - red;
+    green = 255 - green;
+    blue = 255 - blue;
+  #endif
+  analogWrite(m_redled, red);
+  analogWrite(m_greenled, green);
+  analogWrite(m_blueled, blue);  
+}
+
+
+//------------------------------------------------------------
+// Other public functions
 
 void printTimeSerial(DateTime now){
     //------------------------------------------------
@@ -374,9 +462,15 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
     //------------------------------------------------------------
     // Write 1st header line
     logfile.print(F("POSIXt,DateTime"));
-    for (byte i = 0; i < 16; i++){
-        // Cycle through channels to create headers for each column
-        logfile.print(F(",Hall"));
+	// write column headers for the 4 reference mussel temperatures
+	for (byte i = 1; i <=4; i++){
+		logfile.print(F(",RefTemp"));
+		logfile.print(i);
+	}
+	// write column headers for the 16 heated mussel temperatures
+    for (byte i = 1; i <= 16; i++){
+        
+        logfile.print(F(",Heated"));
         logfile.print(i);
     }
     logfile.print(F(",Battery.V"));
@@ -504,7 +598,10 @@ void goToSleep() {
 // and calculate the approximate battery voltage (before the
 // voltage regulator). Returns a floating point value for
 // voltage.
-float readBatteryVoltage(byte BATT_MONITOR_EN, byte BATT_MONITOR, float dividerRatio, float refVoltage){
+float readBatteryVoltage(byte BATT_MONITOR_EN, 
+							byte BATT_MONITOR, 
+							float dividerRatio, 
+							float refVoltage){
     // Turn on the battery voltage monitor circuit
     digitalWrite(BATT_MONITOR_EN, HIGH);
     delay(1);
@@ -527,3 +624,7 @@ float readBatteryVoltage(byte BATT_MONITOR_EN, byte BATT_MONITOR, float dividerR
     float reading = rawAnalog * dividerRatio * refVoltage / 1024;
     return reading; // return voltage result
 }
+
+
+
+

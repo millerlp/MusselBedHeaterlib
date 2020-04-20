@@ -62,7 +62,8 @@ public:
 	void begin(double* kp, 
 		double* ki, 
 		double* kd, 
-		int pidSampleTime );
+		int pidSampleTime,
+		bool Pon);
 	
 	bool Compute(double pidInput[], 
 					double pidOutput[], 
@@ -80,6 +81,8 @@ public:
 					double pidOutputSum[],
 					unsigned long lastTime,
 					uint8_t NUM_THERMISTORS);
+private:
+	bool PonE; // Proportional on Error flag (1 for P on Error, 0 for P on Measurement)
 
 };
 

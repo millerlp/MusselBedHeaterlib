@@ -73,7 +73,8 @@ PID::~PID(){}
 void PID::begin(double* kp, 
 				double* ki, 
 				double* kd, 
-				int pidSampleTime)
+				int pidSampleTime,
+				bool Pon)
 {
    double SampleTimeInSec = ((double)pidSampleTime)/1000;
    // Scale the ki and kd value from milliseconds to seconds, leave kp unchanged
@@ -81,6 +82,7 @@ void PID::begin(double* kp,
    // values in the global variable versions of ki, kd (kp is left unchanged)
    *ki =  *ki * SampleTimeInSec;
    *kd = *kd / SampleTimeInSec;
+   PonE = Pon;
 }
 
 /* Compute() **********************************************************************
@@ -125,16 +127,23 @@ bool PID::Compute(double pidInput[],
 		   if (input > -20 & input < 60){
 			   pidLastInput[i] = input;
 			   pidOutputSum[i] += (ki * error);
-			   /*Add Proportional on Measurement*/
-			   pidOutputSum[i] -= kp * dInput;
+			   /*If using Proportional on Measurement, adjust output sum*/
+			   if (!PonE) pidOutputSum[i] -= kp * dInput;
+			   
 			   if(pidOutputSum[i] > 4095) pidOutputSum[i] = 4095; // Hardcoded max for 16-bit PWM
 			   else if(pidOutputSum[i] < 0) pidOutputSum[i] = 0; // Hardcoded minimum
-			   /*Add Proportional on Error*/
-			   pidOutput[i] = kp * error;
+			   /*If using Proportional on Error, add error to Output term*/
+			   if (PonE) {
+				   pidOutput[i] = kp * error;
+			   } else { 
+				pidOutput[i] = 0; /*If using Proportional on Measurement, reset output term to 0 */
+			   } 
+			   
+			   
 			   /*Compute Rest of PID Output*/
 			   pidOutput[i] += pidOutputSum[i] - (kd * dInput);
-			   if(pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
-			   else if(pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum			   
+			   if (pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
+			   else if (pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum			   
 		   } else {
 			   // If input temperature is out of bounds, zero everything out
 			   pidLastInput[i] = input;
@@ -464,14 +473,19 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
     logfile.print(F("POSIXt,DateTime"));
 	// write column headers for the 4 reference mussel temperatures
 	for (byte i = 1; i <=4; i++){
-		logfile.print(F(",RefTemp"));
-		logfile.print(i);
+		logfile.print(F(",RefTemp")); // column title
+		logfile.print(i);		// add channel number to title
+		logfile.print(F(".C")); // add units Celsius on end
 	}
+	// write header for Setpoint temperature
+	logfile.print(F(",Setpoint.C"));
+	
 	// write column headers for the 16 heated mussel temperatures
     for (byte i = 1; i <= 16; i++){
         
-        logfile.print(F(",Heated"));
-        logfile.print(i);
+        logfile.print(F(",Heated")); // column title
+        logfile.print(i);		     // add channel number to title
+		logfile.print(F(".C"));      // add units Celsius on end
     }
     logfile.print(F(",Battery.V"));
     logfile.println();

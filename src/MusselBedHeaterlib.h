@@ -122,6 +122,11 @@ void printTimeToSD(SdFile& mylogfile, DateTime now);
 // to the file, so you may want to tweak the column labels in this function.
 void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber);
 
+// Initialize a new output file that contains additional info from the PID output
+// routine. Supply the value nChannels to indicate how many thermistors/PID outputs 
+// to save.
+void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels);
+
 // Start the TIMER2 timer, using a 32.768kHz input from a DS3231M
 // real time clock as the signal.
 DateTime startTIMER2(DateTime currTime, RTC_DS3231& rtc, byte SPS);

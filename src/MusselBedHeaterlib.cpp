@@ -500,6 +500,134 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
 } // end of initFileName function
 
 
+//-------------- initTuningFileName --------------------------------------------------
+// initTuningFileName - a function to create a filename for the SD card based
+// on the 4-digit year, month, day, hour, minutes and a 2-digit counter.
+// This version is set up to record additional columns of data from the PID output
+// routine associated with each thermistor channel.
+// The character array 'filename' was defined as a global array
+// at the top of the sketch in the form "YYYYMMDD_HHMM_00.csv"
+void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels) {
+    
+    char buf[5];
+    // integer to ascii function itoa(), supplied with numeric year value,
+    // a buffer to hold output, and the base for the conversion (base 10 here)
+    itoa(time1.year(), buf, 10);
+    // copy the ascii year into the filename array
+    for (byte i = 0; i < 4; i++){
+        filename[i] = buf[i];
+    }
+    // Insert the month value
+    if (time1.month() < 10) {
+        filename[4] = '0';
+        filename[5] = time1.month() + '0';
+    } else if (time1.month() >= 10) {
+        filename[4] = (time1.month() / 10) + '0';
+        filename[5] = (time1.month() % 10) + '0';
+    }
+    // Insert the day value
+    if (time1.day() < 10) {
+        filename[6] = '0';
+        filename[7] = time1.day() + '0';
+    } else if (time1.day() >= 10) {
+        filename[6] = (time1.day() / 10) + '0';
+        filename[7] = (time1.day() % 10) + '0';
+    }
+    // Insert an underscore between date and time
+    filename[8] = '_';
+    // Insert the hour
+    if (time1.hour() < 10) {
+        filename[9] = '0';
+        filename[10] = time1.hour() + '0';
+    } else if (time1.hour() >= 10) {
+        filename[9] = (time1.hour() / 10) + '0';
+        filename[10] = (time1.hour() % 10) + '0';
+    }
+    // Insert minutes
+    if (time1.minute() < 10) {
+        filename[11] = '0';
+        filename[12] = time1.minute() + '0';
+    } else if (time1.minute() >= 10) {
+        filename[11] = (time1.minute() / 10) + '0';
+        filename[12] = (time1.minute() % 10) + '0';
+    }
+    // Insert another underscore after time
+    filename[13] = '_';
+    // If there is a valid serialnumber, insert it into
+    // the file name in positions 17-20.
+    if (serialValid) {
+        byte serCount = 0;
+        for (byte i = 17; i < 21; i++){
+            filename[i] = serialNumber[serCount];
+            serCount++;
+        }
+    }
+    // Next change the counter on the end of the filename
+    // (digits 14+15) to increment count for files generated on
+    // the same day. This shouldn't come into play
+    // during a normal data run, but can be useful when
+    // troubleshooting.
+    for (uint8_t i = 0; i < 100; i++) {
+        filename[14] = i / 10 + '0';
+        filename[15] = i % 10 + '0';
+        
+        if (!sd.exists(filename)) {
+            // when sd.exists() returns false, this block
+            // of code will be executed to open the file
+            if (!logfile.open(filename, O_RDWR | O_CREAT | O_AT_END)) {
+                // If there is an error opening the file, notify the
+                // user. Otherwise, the file is open and ready for writing
+                // Turn both indicator LEDs on to indicate a failure
+                // to create the log file
+                //				digitalWrite(ERRLED, !digitalRead(ERRLED)); // Toggle error led
+                //				digitalWrite(GREENLED, !digitalRead(GREENLED)); // Toggle indicator led
+                delay(5);
+            }
+            break; // Break out of the for loop when the
+            // statement if(!logfile.exists())
+            // is finally false (i.e. you found a new file name to use).
+        } // end of if(!sd.exists())
+    } // end of file-naming for loop
+    //------------------------------------------------------------
+    // Write 1st header line
+    logfile.print(F("POSIXt,DateTime"));
+	// write column headers for the 4 reference mussel temperatures
+	for (byte i = 1; i <=4; i++){
+		logfile.print(F(",RefTemp")); // column title
+		logfile.print(i);		// add channel number to title
+		logfile.print(F(".C")); // add units Celsius on end
+	}
+	// write header for Setpoint temperature
+	logfile.print(F(",Setpoint.C"));
+	
+	// write column headers for the 16 heated mussel temperatures
+    for (byte i = 1; i <= nChannels; i++){
+        
+        logfile.print(F(",Heated")); // column title
+        logfile.print(i);		     // add channel number to title
+		logfile.print(F(".C"));      // add units Celsius on end
+    }
+	// write column headers for the 16 PID output values for each heated mussel
+	for (byte i = 1; i <= nChannels; i++){
+        
+        logfile.print(F(",PIDoutput")); // column title
+        logfile.print(i);		     // add channel number to title
+		
+    }
+    logfile.print(F(",Battery.V"));
+    logfile.println();
+    // Update the file's creation date, modify date, and access date.
+    logfile.timestamp(T_CREATE, time1.year(), time1.month(), time1.day(), 
+                      time1.hour(), time1.minute(), time1.second());
+    logfile.timestamp(T_WRITE, time1.year(), time1.month(), time1.day(), 
+                      time1.hour(), time1.minute(), time1.second());
+    logfile.timestamp(T_ACCESS, time1.year(), time1.month(), time1.day(), 
+                      time1.hour(), time1.minute(), time1.second());
+    logfile.close(); // force the data to be written to the file by closing it
+} // end of initFileName function
+
+
+
 //---------- startTIMER2 ----------------------------------------------------
 // startTIMER2 function
 // Starts the 32.768kHz clock signal being fed into XTAL1 from the

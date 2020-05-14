@@ -112,7 +112,8 @@ bool PID::Compute(double pidInput[],
 					double kp,
 					double ki,
 					double kd,
-					uint8_t NUM_THERMISTORS)
+					uint8_t NUM_THERMISTORS,
+					bool deadband)
 {
    unsigned long now = millis();
    unsigned long timeChange = (now - lastTime);
@@ -143,7 +144,18 @@ bool PID::Compute(double pidInput[],
 			   /*Compute Rest of PID Output*/
 			   pidOutput[i] += pidOutputSum[i] - (kd * dInput);
 			   if (pidOutput[i] > 4095) pidOutput[i] = 4095; // Hardcoded max for 16-bit PWM
-			   else if (pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum			   
+			   else if (pidOutput[i] < 0) pidOutput[i] = 0;	 // Hardcoded minimum	
+			   if (deadband){
+				   // If deadband argument is true, set output to zero whenever
+				   // the input temperature is substantially larger than the 
+				   // pidSetpoint temperature
+					if (error < -0.25) {
+						pidOutput[i] = 0; 
+						pidOutputSum[i] = 0;
+						pidLastInput[i] = input;
+					}   
+			   }
+			   
 		   } else {
 			   // If input temperature is out of bounds, zero everything out
 			   pidLastInput[i] = input;
@@ -507,7 +519,7 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
 // routine associated with each thermistor channel.
 // The character array 'filename' was defined as a global array
 // at the top of the sketch in the form "YYYYMMDD_HHMM_00.csv"
-void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels) {
+void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels, double Kp, double Ki, double Kd, double tempIncreaseC) {
     
     char buf[5];
     // integer to ascii function itoa(), supplied with numeric year value,
@@ -590,6 +602,15 @@ void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filena
     } // end of file-naming for loop
     //------------------------------------------------------------
     // Write 1st header line
+	logfile.print(F("Kp,"));
+	logfile.print(Kp,4);
+	logfile.print(F(",Ki,"));
+	logfile.print(Ki,3);
+	logfile.print(F(",Kd,"));
+	logfile.print(Kd,4);
+	logfile.print(F(",TempIncrease,"));
+	logfile.print(tempIncreaseC);
+	// Write 2nd header line
     logfile.print(F("POSIXt,DateTime"));
 	// write column headers for the 4 reference mussel temperatures
 	for (byte i = 1; i <=4; i++){

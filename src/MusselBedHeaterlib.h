@@ -60,10 +60,10 @@ public:
 	PID();
 	~PID();
 	void begin(double* kp, 
-		double* ki, 
-		double* kd, 
-		int pidSampleTime,
-		bool Pon);
+				double* ki, 
+				double* kd, 
+				int pidSampleTime,
+				bool Pon);
 	
 	bool Compute(double pidInput[], 
 					double pidOutput[], 
@@ -75,7 +75,8 @@ public:
 					double kp,
 					double ki,
 					double kd,
-					uint8_t NUM_THERMISTORS);
+					uint8_t NUM_THERMISTORS,
+					bool deadband);
 					
 	void resetPID(double pidOutput[], 
 					double pidOutputSum[],
@@ -125,7 +126,7 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
 // Initialize a new output file that contains additional info from the PID output
 // routine. Supply the value nChannels to indicate how many thermistors/PID outputs 
 // to save.
-void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels);
+void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bool serialValid, char *serialNumber, byte nChannels,double Kp, double Ki, double Kd, double tempIncreaseC);
 
 // Start the TIMER2 timer, using a 32.768kHz input from a DS3231M
 // real time clock as the signal.

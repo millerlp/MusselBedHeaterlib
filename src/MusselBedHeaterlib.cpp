@@ -609,7 +609,7 @@ void initTuningFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filena
 	logfile.print(F(",Kd,"));
 	logfile.print(Kd,4);
 	logfile.print(F(",TempIncrease,"));
-	logfile.print(tempIncreaseC);
+	logfile.println(tempIncreaseC,1);
 	// Write 2nd header line
     logfile.print(F("POSIXt,DateTime"));
 	// write column headers for the 4 reference mussel temperatures

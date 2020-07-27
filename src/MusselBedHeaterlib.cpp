@@ -107,7 +107,7 @@ bool PID::Compute(double pidInput[],
 					double pidOutputSum[], 
 					double pidLastInput[], 
 					double pidSetpoint, 
-					int pidSampleTime,
+					unsigned int pidSampleTime,
 					unsigned long lastTime,
 					double kp,
 					double ki,
@@ -125,7 +125,7 @@ bool PID::Compute(double pidInput[],
 		   double error = pidSetpoint - input; 
 		   double dInput = (input - pidLastInput[i]);
 		   // If input temperature is reasonable (higher than -20)
-		   if (input > -20 & input < 60){
+		   if ( (input > -20) & (input < 60) ){
 			   pidLastInput[i] = input;
 			   pidOutputSum[i] += (ki * error);
 			   /*If using Proportional on Measurement, adjust output sum*/
@@ -782,9 +782,9 @@ float readBatteryVoltage(byte BATT_MONITOR_EN,
     rawAnalog = rawAnalog >> 2;
     // Shut off the battery voltage sense circuit
     digitalWrite(BATT_MONITOR_EN, LOW);
-    // Convert the rawAnalog count value (0-1024) into a voltage
-    // Relies on global variables dividerRatio and refVoltage
-    float reading = rawAnalog * dividerRatio * refVoltage / 1024;
+    // Convert the rawAnalog count value (0-1023) into a voltage
+    // Relies on variables dividerRatio and refVoltage
+    float reading = (rawAnalog  * (refVoltage / 1023.0)) * dividerRatio;
     return reading; // return voltage result
 }
 

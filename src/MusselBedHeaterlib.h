@@ -70,7 +70,7 @@ public:
 					double pidOutputsum[], 
 					double pidLastInput[], 
 					double pidSetpoint, 
-					int pidSampleTime, 
+					unsigned int pidSampleTime, 
 					unsigned long lastTime,
 					double kp,
 					double ki,

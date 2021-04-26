@@ -500,6 +500,8 @@ void initFileName(SdFat& sd, SdFile& logfile, DateTime time1, char *filename, bo
 		logfile.print(F(".C"));      // add units Celsius on end
     }
     logfile.print(F(",Battery.V"));
+	logfile.print(F(",Tide.ft"));
+	logfile.print(F(",State"));
     logfile.println();
     // Update the file's creation date, modify date, and access date.
     logfile.timestamp(T_CREATE, time1.year(), time1.month(), time1.day(), 
